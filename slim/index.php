@@ -7,7 +7,6 @@
     require __DIR__ . '/vendor/autoload.php';
 
     $app = AppFactory::create();
-    $app->addBodyParsingMiddleware();
     $app->addRoutingMiddleware();
 
     function getConnection(){
@@ -22,7 +21,7 @@
         return $connection;
     }
 
-
+    $app->addBodyParsingMiddleware();
     $app->addErrorMiddleware(true, true, true);
     $app->add( function ($request, $handler) {
         $response = $handler->handle($request);
@@ -244,7 +243,7 @@
 //INQUILINO
     //CREAR
         $app->post('/inquilinos',function(Request $request,Response $response){
-
+            try{
             $connection = getConnection();
         
             $params = $request->getParsedBody();
@@ -254,8 +253,11 @@
             $requiredKeys = ["nombre","apellido","documento","email"];
             $missingKeys = []; //almaceno las claves que faltan
         
-            foreach($params as $key => $value){
-                if(in_array($key,$requiredKeys)){
+            foreach($requiredKeys as $key){
+                if(!array_key_exists($key, $params)){
+                    $missingKeys[] = $key;
+                }else{
+                    $value=$params[$key];
                     if(empty($value)){
                         $missingKeys[] = $key; //las agrego al array
                     }
@@ -344,6 +346,17 @@
         
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type','application/json');
+
+        } catch (PDOException $e){
+            $json = json_encode([
+                'status' => 'error',
+                'code' => 400,
+            ]);
+    
+            $response->getBody()->write($json);
+            return $response-> withHeader('Content-Type','application/json');
+    
+        }
         
         });
     //EDITAR
@@ -570,99 +583,110 @@
 //PROPIEDAD
     //CREAR
         $app -> post ('/propiedades', function (Request $request, Response $response){
-            $connection = getConnection();
-            $datos = $request -> getParsedBody();
-            $params= [
-                "domicilio" => trim($datos["domicilio"]),
-                "localidad_id" => trim($datos["localidad_id"]),
-                "cantidad_huespedes" => trim($datos["cantidad_huespedes"]),
-                "fecha_inicio_disponibilidad" => trim($datos["fecha_inicio_disponibilidad"]),
-                "cantidad_dias" => trim($datos["cantidad_dias"]),
-                "disponible" => trim($datos["disponible"]),
-                "valor_noche" => trim($datos["valor_noche"]),
-                "tipo_propiedad_id" => trim($datos["tipo_propiedad_id"]),
-            ];
-            $requiredKeys = ["domicilio","localidad_id","cantidad_huespedes","fecha_inicio_disponibilidad","cantidad_dias","disponible","valor_noche","tipo_propiedad_id"];
-            $missingKeys = [];
-        
-            foreach($params as $key => $value){
-                if (in_array($key,$requiredKeys)){
-                    if(empty($value)){
+            try{
+                $connection = getConnection();
+
+                $params = $request -> getParsedBody();
+                
+                $requiredKeys = ["domicilio","localidad_id","cantidad_huespedes","fecha_inicio_disponibilidad","cantidad_dias","disponible","valor_noche","tipo_propiedad_id"];
+                $missingKeys = [];
+            
+                foreach($requiredKeys as $key){
+                    if(!array_key_exists($key, $params)){
                         $missingKeys[] = $key;
+                    }else{
+                        $value=$params[$key];
+                        if(empty($value)){
+                            $missingKeys[] = $key; //las agrego al array
+                        }
                     }
                 }
+                
+                if(empty($missingKeys)){
+            
+                    $stmt = $connection->prepare("SELECT * FROM localidades WHERE id = :localidad_id");
+                    $stmt->bindParam(':localidad_id',$params['localidad_id']);
+                    $stmt->execute();
+            
+                if ($stmt->rowCount() > 0) {
+            
+                    $stmt = $connection->prepare("SELECT * FROM tipo_propiedades WHERE id = :tipo_propiedad_id");
+                    $stmt->bindParam(':tipo_propiedad_id',$params['tipo_propiedad_id']);
+                    $stmt->execute();
+            
+                    if ($stmt->rowCount() > 0) {
+            
+                    $stmt = $connection->prepare("INSERT INTO propiedades(domicilio,localidad_id,cantidad_habitaciones,cantidad_banios,cochera,cantidad_huespedes,fecha_inicio_disponibilidad,cantidad_dias,disponible,valor_noche,tipo_propiedad_id,imagen,tipo_imagen)
+                                                VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, :fecha_inicio_disponibilidad, :cantidad_dias, :disponible, :valor_noche, :tipo_propiedad_id, :imagen, :tipo_imagen)");
+                    $stmt->bindParam(':domicilio',$params['domicilio']);
+                    $stmt->bindParam(':localidad_id',$params['localidad_id']);
+                    $stmt->bindParam(':cantidad_habitaciones',$params['cantidad_habitaciones']);
+                    $stmt->bindParam(':cantidad_banios',$params['cantidad_banios']);
+                    $stmt->bindParam(':cochera',$params['cochera']);
+                    $stmt->bindParam(':cantidad_huespedes',$params['cantidad_huespedes']);
+                    $stmt->bindParam(':fecha_inicio_disponibilidad',$params['fecha_inicio_disponibilidad']);
+                    $stmt->bindParam(':cantidad_dias',$params['cantidad_dias']);
+                    $stmt->bindParam(':disponible',$params['disponible']);
+                    $stmt->bindParam(':valor_noche',$params['valor_noche']);
+                    $stmt->bindParam(':tipo_propiedad_id',$params['tipo_propiedad_id']);
+                    $stmt->bindParam(':imagen',$params['imagen']);
+                    $stmt->bindParam(':tipo_imagen',$params['tipo_imagen']);
+                    $stmt->execute();
+            
+
+                $payload = json_encode([
+                        'message' => 'La propiedad se inserto en la base de datos correctamente.',
+                        'status' => 'success',
+                        'code' => 201,
+                        'data' => $params
+                    ]);
+                    
+                }else {
+            
+                    $payload = json_encode([
+                        'message' => 'El tipo de propiedad no existe.',
+                        'status' => 'Error',
+                        'code' => 400,
+                    ]);
+                }
+                } else {
+            
+                    $payload = json_encode([
+                        'message' => 'La localidad no existe.',
+                        'status' => 'Error',
+                        'code' => 400,
+                    ]);
+                }
+                    
+                } else {
+            
+                $payload = json_encode([
+                    'message' => 'Falta completar los siguientes campos',
+                    'status' => 'Error',
+                    'code' => 400,
+                    'data' => $missingKeys
+                ]);
+            
+                $data = 'Faltan los datos: ' . implode(', ',$missingKeys);
             }
             
-            if(empty($missingKeys)){
-        
-                $stmt = $connection->prepare("SELECT * FROM localidades WHERE id = :localidad_id");
-                $stmt->bindParam(':localidad_id',$params['id']);
-                $stmt->execute();
-        
-            if (!$stmt->rowCount() > 0) {
-        
-                $stmt = $connection->prepare("SELECT * FROM tipo_propiedades WHERE id = :tipo_propiedad_id");
-                $stmt->bindParam(':tipo_propiedad_id',$params['id']);
-                $stmt->execute();
-        
-                if (!$stmt->rowCount() > 0) {
-        
-                $stmt = $connection->prepare("INSERT INTO propiedades(domicilio,localidad_id,cantidad_habitaciones,cantidad_banios,cochera,cantidad_huespedes,fecha_inicio_disponibilidad,cantidad_dias,disponible,valor_noche,tipo_propiedad_id,imagen,tipo_imagen)
-                                            VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, :fecha_inicio_disponibilidad, :cantidad_dias, :disponible, :valor_noche, :tipo_propiedad_id, :imagen, :tipo_imagen)");
-                $stmt->bindParam(':domicilio',$params['domicilio']);
-                $stmt->bindParam(':localidad_id',$params['localidad_id']);
-                $stmt->bindParam(':cantidad_habitaciones',$params['cantidad_habitaciones']);
-                $stmt->bindParam(':cantidad_banios',$params['cantidad_banios']);
-                $stmt->bindParam(':cochera',$params['cochera']);
-                $stmt->bindParam(':cantidad_huespedes',$params['cantidad_huespedes']);
-                $stmt->bindParam(':fecha_inicio_disponibilidad',$params['fecha_inicio_disponibilidad']);
-                $stmt->bindParam(':cantidad_dias',$params['cantidad_dias']);
-                $stmt->bindParam(':disponible',$params['disponible']);
-                $stmt->bindParam(':valor_noche',$params['valor_noche']);
-                $stmt->bindParam(':tipo_propiedad_id',$params['tipo_propiedad_id']);
-                $stmt->bindParam(':imagen',$params['imagen']);
-                $stmt->bindParam(':tipo_imagen',$params['tipo_imagen']);
-                $stmt->execute();
-        
-                $payload = json_encode([
-                    'message' => 'La propiedad se inserto en la base de datos correctamente.',
-                    'status' => 'success',
-                    'code' => 201,
-                    'data' => $params
-                ]);
-            } else {
-        
-                $payload = json_encode([
-                    'message' => 'El tipo de propiedad no existe.',
-                    'status' => 'Error',
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type','application/json');
+            
+  
+            
+            } catch (PDOException $e){
+                $json = json_encode([
+                    'status' => 'error',
                     'code' => 400,
                 ]);
+
+                $response->getBody()->write($json);
+                return $response-> withHeader('Content-Type','application/json');
+
             }
-            } else {
-        
-                $payload = json_encode([
-                    'message' => 'La localidad no existe.',
-                    'status' => 'Error',
-                    'code' => 400,
-                ]);
-            }
-                
-            } else {
-        
-            $payload = json_encode([
-                'message' => 'Falta completar los siguientes campos',
-                'status' => 'Error',
-                'code' => 400,
-                'data' => $missingKeys
-            ]);
-        
-            $data = 'Faltan los datos: ' . implode(', ',$missingKeys);
-        }
-        
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type','application/json');
-        
         });
+        
     //EDITAR
     //ELIMINAR
     //LISTAR
@@ -725,6 +749,8 @@
                 return $response -> withHeader('Content-Type','application/json');
             }
         });
+
+
 /*
 $app->delete('/tipos_propiedad/{id}', function (Request $request, Response $response) {
     $connection = getConnection();
