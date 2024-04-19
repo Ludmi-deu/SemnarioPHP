@@ -212,6 +212,44 @@
         });
     //EDITAR
     //ELIMINAR
+        $app->delete('/tipos_propiedad/{id}', function (Request $request, Response $response) {
+            $id = (int) $request->getAttribute('id');
+            try {
+            $connection = getConnection();
+                
+                
+            $consultaVerificacion = $connection->prepare('SELECT COUNT(*) FROM propiedades WHERE tipo_propiedad_id = :id');
+            $consultaVerificacion->bindParam(':id', $id, PDO::PARAM_INT);
+            $consultaVerificacion->execute();
+            
+            $registrosReferenciados = $consultaVerificacion->fetchColumn();
+        
+                if ($registrosReferenciados > 0) {
+                    $response -> getBody() ->write(json_encode("El tipo de propiedad no puede eliminarse porque está referenciado en la tabla 'propiedades'."));
+                    return $response->withStatus(409); // Conflicto
+                                    
+                }else{
+                        $query = $connection->prepare('DELETE FROM tipo_propiedades WHERE id =:id');
+                        $query->bindParam(':id', $id, PDO::PARAM_INT);
+                        $query->execute();
+        
+                        $deletedRows = $query->rowCount();
+        
+                        if ($deletedRows > 0) {
+                            $response -> getBody() -> write(json_encode("Tipo de propiedad eliminado con exito"));
+                            return $response->withStatus(200);
+                        } else {
+                            $response -> getBody() -> write(json_encode("tipo de propiedad no encontrado"));
+                            return $response->withStatus(404); // No encontrado
+                        }
+                }
+            } catch (Exception $e) {
+                    $response->getBody()->write(json_encode(['Error'=>$e->getMessage()]));
+                    return $response->withStatus(500);
+                        }
+        });
+    
+    
     //LISTAR
         $app->get('/tipos_propiedad',function (Request $request, Response $response){
             $connection = getConnection();
@@ -751,32 +789,7 @@
         });
 
 
-/*
-$app->delete('/tipos_propiedad/{id}', function (Request $request, Response $response) {
-    $connection = getConnection();
-    try {
-      $id = (int) $request->getAttribute('id');
-  
-      $query = $connection->prepare('DELETE FROM tipo_propiedades WHERE id =:id');
-      $query->bindParam(':id', $id, PDO::PARAM_INT);
-      $query->execute();
-  
-      $deletedRows = $query->rowCount();
-  
-      if ($deletedRows > 0) {
-        return $response->withStatus(200); // OK (sin cuerpo)
-      } else {
-        return $response->withStatus(404); // No encontrado
-      }
-    } catch (Exception $e) {
-      return $response->withStatus(500) // Error interno del servidor
-                     ->withJson([
-                       'error' => true,
-                       'message' => 'Error al eliminar el registro: ' . $e->getMessage()
-                     ]);
-    }
-  });
-*/
+
 
 
 
