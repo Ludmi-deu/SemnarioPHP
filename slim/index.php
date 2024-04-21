@@ -106,6 +106,43 @@
         });
     //EDITAR
     //ELIMINAR
+        $app->delete('/localidades/{id}', function (Request $request, Response $response) {
+            $id = (int) $request->getAttribute('id');
+            try {
+            $connection = getConnection();
+                
+                
+            $consultaVerificacion = $connection->prepare('SELECT COUNT(*) FROM propiedades WHERE localidad_id = :id');
+            $consultaVerificacion->bindParam(':id', $id, PDO::PARAM_INT);
+            $consultaVerificacion->execute();
+            
+            $registrosReferenciados = $consultaVerificacion->fetchColumn();
+        
+                if ($registrosReferenciados > 0) {
+                    $response -> getBody() ->write(json_encode("La localidad no puede eliminarse porque está referenciado en la tabla 'propiedades'."));
+                    return $response->withStatus(409); // Conflicto
+                                    
+                }else{
+                        $query = $connection->prepare('DELETE FROM localidades WHERE id =:id');
+                        $query->bindParam(':id', $id, PDO::PARAM_INT);
+                        $query->execute();
+        
+                        $deletedRows = $query->rowCount();
+        
+                        if ($deletedRows > 0) {
+                            $response -> getBody() -> write(json_encode("Localidad eliminado con exito"));
+                            return $response->withStatus(200);
+                        } else {
+                            $response -> getBody() -> write(json_encode("Localidad no encontrada"));
+                            return $response->withStatus(404); // No encontrado
+                        }
+                }
+            } catch (Exception $e) {
+                    $response->getBody()->write(json_encode(['Error'=>$e->getMessage()]));
+                    return $response->withStatus(500);
+                        }
+        });
+
     //LISTAR
         $app->get('/localidades',function (Request $request, Response $response){
             $connection = getConnection();
@@ -553,6 +590,43 @@
         });
     
     //ELIMINAR
+        $app->delete('/inquilinos/{id}', function (Request $request, Response $response) {
+            $id = (int) $request->getAttribute('id');
+            try {
+            $connection = getConnection();
+                
+                
+            $consultaVerificacion = $connection->prepare('SELECT COUNT(*) FROM reservas WHERE inquilino_id = :id');
+            $consultaVerificacion->bindParam(':id', $id, PDO::PARAM_INT);
+            $consultaVerificacion->execute();
+            
+            $registrosReferenciados = $consultaVerificacion->fetchColumn();
+        
+                if ($registrosReferenciados > 0) {
+                    $response -> getBody() ->write(json_encode("El inquilino no puede eliminarse porque está referenciado en la tabla 'reservas'."));
+                    return $response->withStatus(409); // Conflicto
+                                    
+                }else{
+                        $query = $connection->prepare('DELETE FROM inquilinos WHERE id =:id');
+                        $query->bindParam(':id', $id, PDO::PARAM_INT);
+                        $query->execute();
+        
+                        $deletedRows = $query->rowCount();
+        
+                        if ($deletedRows > 0) {
+                            $response -> getBody() -> write(json_encode("Inquilino eliminado con exito"));
+                            return $response->withStatus(200);
+                        } else {
+                            $response -> getBody() -> write(json_encode("Inquilino no encontrado"));
+                            return $response->withStatus(404); // No encontrado
+                        }
+                }
+            } catch (Exception $e) {
+                    $response->getBody()->write(json_encode(['Error'=>$e->getMessage()]));
+                    return $response->withStatus(500);
+                        }
+        });
+
     //LISTAR
         $app->get('/inquilinos',function (Request $request, Response $response){
             $connection = getConnection();
