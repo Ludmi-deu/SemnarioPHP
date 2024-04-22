@@ -1076,11 +1076,10 @@
                 }
         
                 // Consulta para verificar la disponibilidad de la propiedad
-                $stmt = $connection->prepare("SELECT p.*, r.fecha_desde, r.cantidad_noches
-                                             FROM propiedades p
-                                             INNER JOIN reservas r ON p.id = r.propiedad_id
-                                             WHERE p.id = :propiedad_id
-                                             AND p.disponible = true");
+                $stmt = $connection->prepare("SELECT disponible
+                                             FROM propiedades 
+                                             WHERE id = :propiedad_id
+                                             AND disponible = true");
                 $stmt->bindParam(':propiedad_id', $params['propiedad_id']);
                 $stmt->execute();
         
