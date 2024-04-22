@@ -105,6 +105,94 @@
         
         });
     //EDITAR
+        $app->put('/localidades/{id}', function(Request $request,Response $response){
+
+            try{
+        
+                $error = "";
+        
+                $connection = getConnection();
+        
+                $id = $request->getAttribute('id');
+        
+                $stmt = $connection->prepare("SELECT * FROM localidades WHERE id = :id");
+                $stmt->bindParam(':id',$id);
+                $stmt->execute();
+                
+                if($stmt->rowCount() > 0){
+        
+                    $data = $request->getParsedBody();
+        
+                    if(isset($data['nombre'])){
+                        
+                        $nombre = $data['nombre'];
+        
+                        if(empty($nombre)){
+                            $error = "El campo nombre esta vacio.";
+                        }
+        
+                        if(strlen($nombre) > 50){ 
+                            $error = "El campo nombre contiene más caracteres de los permitidos.";        
+                            
+                        } 
+                    } else {
+                        $error = "El nombre no esta definido.";
+                    }   
+                    
+                    if(empty($error)){
+                        
+                        $connection = getConnection();
+                        $stmt = $connection->prepare("SELECT COUNT(*) FROM localidades WHERE nombre = :nombre");
+                        $stmt->bindParam(':nombre',$nombre,PDO::PARAM_STR);
+                        $stmt->execute();
+                        $count = $stmt->fetchColumn();
+        
+                        if(!$count > 0){
+        
+                            $stmt = $connection->prepare("UPDATE localidades SET nombre = :nombre WHERE id = :id");
+                            $stmt->bindParam(':nombre',$nombre,);
+                            $stmt->bindParam(':id',$id);
+                            $stmt->execute();
+        
+                            $payload = json_encode([
+                                'status' => "success",
+                                'code' => "200",
+                                'message' => 'el nombre se actualizo correctamente.'
+                            ]);
+                            
+                            $response->withHeader('Content+Type','application/json');
+        
+                        } else {
+                            $error = "el nombre ya se encuentra en la base de datos y debe ser único";
+                        }
+                    }
+        
+                } else {
+                    $error = "el id no se encuentra en la base de datos";
+                }
+        
+            } catch (PDOException $e){
+                $error = "PDOException";
+            }
+        
+            if(!empty($error)){
+                
+                $payload = json_encode([
+                    'status' => "error",
+                    'code' => "400",
+                    'message' => $error
+                ]);
+                $response-> withHeader('Content-Type','application/json');
+        
+            }
+        
+            $response->getBody()->write($payload);
+            return $response;
+        
+        
+        });
+        
+
     //ELIMINAR
         $app->delete('/localidades/{id}', function (Request $request, Response $response) {
             $id = (int) $request->getAttribute('id');
@@ -248,6 +336,94 @@
 
         });
     //EDITAR
+        $app->put('/tipos_propiedad/{id}',function(Request $request,Response $response){
+
+            try{
+        
+                $error = "";
+        
+                $connection = getConnection();
+        
+                $id = $request->getAttribute('id');
+        
+                $stmt = $connection->prepare("SELECT * FROM tipo_propiedades WHERE id = :id");
+                $stmt->bindParam(':id',$id);
+                $stmt->execute();
+                
+                if($stmt->rowCount() > 0){
+        
+                    $data = $request->getParsedBody();
+        
+                    if(isset($data['nombre'])){
+                        
+                        $nombre = $data['nombre'];
+        
+                        if(empty($nombre)){
+                            $error = "El campo nombre esta vacio.";
+                        }
+        
+                        if(strlen($nombre) > 50){ 
+                            $error = "El campo nombre contiene más caracteres de los permitidos.";        
+                            
+                        } 
+                    } else {
+                        $error = "El nombre no esta definido.";
+                    }   
+                    
+                    if(empty($error)){
+                        
+                        $connection = getConnection();
+                        $stmt = $connection->prepare("SELECT COUNT(*) FROM tipo_propiedades WHERE nombre = :nombre");
+                        $stmt->bindParam(':nombre',$nombre,PDO::PARAM_STR);
+                        $stmt->execute();
+                        $count = $stmt->fetchColumn();
+        
+                        if(!$count > 0){
+        
+                            $stmt = $connection->prepare("UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id");
+                            $stmt->bindParam(':nombre',$nombre,);
+                            $stmt->bindParam(':id',$id);
+                            $stmt->execute();
+        
+                            $payload = json_encode([
+                                'status' => "success",
+                                'code' => "200",
+                                'message' => 'el nombre se actualizo correctamente.'
+                            ]);
+                            
+                            $response->withHeader('Content+Type','application/json');
+        
+                        } else {
+                            $error = "el nombre ya se encuentra en la base de datos y debe ser único";
+                        }
+                    }
+        
+                } else {
+                    $error = "el id no se encuentra en la base de datos";
+                }
+        
+            } catch (PDOException $e){
+                $error = "PDOException";
+            }
+        
+            if(!empty($error)){
+                
+                $payload = json_encode([
+                    'status' => "error",
+                    'code' => "400",
+                    'message' => $error
+                ]);
+                $response-> withHeader('Content-Type','application/json');
+        
+            }
+        
+            $response->getBody()->write($payload);
+            return $response;
+        
+        
+        });
+    
+
     //ELIMINAR
         $app->delete('/tipos_propiedad/{id}', function (Request $request, Response $response) {
             $id = (int) $request->getAttribute('id');
@@ -830,6 +1006,41 @@
             }
         });
     //VER PROPIEDAD
+        $app->get('/propiedades/{id}',function (Request $request, Response $response){
+            $connection = getConnection();
+
+            try{
+
+                $id = $request->getAttribute('id');
+                $query = $connection->prepare("SELECT * FROM propiedades WHERE id = ?");
+                $query->execute([$id]);
+
+                $propiedades = $query -> fetchAll(PDO::FETCH_ASSOC);
+                
+                $json = json_encode([
+                    'status' => 'success',
+                    'code' => 200,
+                    'data' => $propiedades
+
+                ]);
+
+                $json = json_encode($propiedades);
+
+
+                $response ->getBody()->write($json);
+                return $response -> withHeader('Content+Type','application/json');
+            
+            } catch (PDOException $e){
+                $json = json_encode([
+                    'status' => 'error',
+                    'code' => 400,
+                ]);
+
+                $response->getBody()->write($json);
+                return $response-> withHeader('Content-Type','application/json');
+
+            }
+        });
 
 //RESERVA
     //CREAR
