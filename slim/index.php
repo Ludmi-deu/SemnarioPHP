@@ -1202,52 +1202,84 @@
                         }
         });
     //LISTAR
-        $app->get('/propiedades', function (Request $request, Response $response){
-                    
-            $connection = getConnection();
-            
+        $app->get('/propiedades',function (Request $request, Response $response){
+
             try{
         
+                        $connection = getConnection();
+                        $params = $request->getQueryParams();
+                        
+                        $sql = 'SELECT p.*, l.nombre AS localidad, tp.nombre AS tipo_de_propiedad
+                                        FROM propiedades p
+                                        INNER JOIN localidades l ON p.localidad_id = l.id
+                                        INNER JOIN tipo_propiedades tp ON p.tipo_propiedad_id = tp.id
+                                        WHERE 1 = 1';
+                                        
+                        if (isset($params['disponible'])) {
+                            if ($params['disponible'] === 'true') {
+                                $sql .= ' AND p.disponible = 1';
+                            } else if ($params['disponible'] === 'false') {
+                                $sql .= ' AND p.disponible = 0';
+                            }
+                        }
+                                            
+                                        
+                        if(isset($params['localidad_id'])){
+                            $sql .= " AND p.localidad_id = :localidad_id";
+                        }
         
-                $params = $request->getQueryParams();
+                                        
+                        if(isset($params['cantidad_huespedes'])){
+                            $sql .= " AND p.cantidad_huespedes >= :cantidad_huespedes";
+                        }
                 
-                $sql = 'SELECT p.*, l.nombre AS localidad, tp.nombre AS tipo_de_propiedad
-                FROM propiedades p
-                INNER JOIN localidades l ON p.localidad_id = l.id
-                INNER JOIN tipo_propiedades tp ON p.tipo_propiedad_id = tp.id
-                WHERE 1 = 1';
+                                        
+                        if(isset($params['fecha_inicio_disponibilidad'])){
+                            $sql .= " AND p.fecha_inicio_disponibilidad <= :fecha_inicio_disponibilidad";
+                        }
+                    
+                    
         
-                foreach($params as $campo => $valor){
-                    $sql .= " AND p.`$campo` = :$campo ";
-                }
+                        $stmt = $connection->prepare($sql);
+                        
+                        if(isset($params['disponible'])){
+                                $stmt->bindParam(":disponible", $params['disponible']);
+                        }
+                        
+                        if(isset($params['localidad_id'])){
+                            $stmt->bindParam(":localidad_id", $params['localidad_id']);
+                        }
+        
+                        if(isset($params['cantidad_huespedes'])){
+                            $stmt->bindParam(":cantidad_huespedes", $params['cantidad_huespedes']);
+                        }
+        
+                        if(isset($params['fecha_inicio_disponibilidad'])){
+                            $stmt->bindParam(":fecha_inicio_disponibilidad", $params['fecha_inicio_disponibilidad']);
+                        }
+                        
+                        $stmt->execute();
+                        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+                        $payload = json_encode([
+                                        'status' => 'success',
+                                        'code' => 200,
+                                        'data' => $data
+                                ]);
+                                
+                        $response->getBody()->write($payload);
+                        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+                        
+            } catch (PDOException $e){
                 
-                $stmt = $connection->prepare($sql);
-                foreach ($params as $campo => $valor) {
-                    $stmt->bindParam(":$campo", $params[$campo]);
-                }
-                $stmt->execute();
-                $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                
-        
-                $payload = json_encode([
-                    'status'=> 'success',
-                    'code'=> 200,
-                    'data'=> $data
-                ]);
-                
-                $response ->getBody()->write($payload);
-                return $response -> withHeader ('Content+Type','application/json');
-        
-        } catch (PDOException $e){
-            $payload = json_encode([
-                'status'=> 'error',
-                'code'=> 400,
-            ]);
-        
-            $response ->getBody()->write ($payload);
-            return $response -> withHeader('Content-Type','application/json');
-        } 
-        
+                        $payload = json_encode([
+                        'message' => 'Error de base de datos: ' . $e->getMessage(),
+                        'status' => 'Error',
+                        'code' => 500,
+                    ]);
+                        $response->getBody()->write($payload);
+                        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+            } 
         });
     //VER PROPIEDAD
         $app->get('/propiedades/{id}',function (Request $request, Response $response){
@@ -1675,20 +1707,7 @@
             }
         });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//
 
 
 
