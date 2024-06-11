@@ -1,38 +1,42 @@
 <?php
-//CONFIGURACION
-    use Psr\Http\Message\ResponseInterface as Response;
-    use Psr\Http\Message\ServerRequestInterface as Request;
-    use Slim\Factory\AppFactory;
 
-    require __DIR__ . '/vendor/autoload.php';
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Factory\AppFactory;
 
-    $app = AppFactory::create();
-    $app->addRoutingMiddleware();
+require __DIR__ . '/vendor/autoload.php';
 
-    function getConnection(){
-        $dbhost="db";
-        $dbname="seminariophp";
-        $dbuser="seminariophp";
-        $dbpass="seminariophp";
+$app = AppFactory::create();
+$app->addRoutingMiddleware();
 
-        $connection = new PDO ("mysql:host=$dbhost;dbname=$dbname",$dbuser,$dbpass);
-        $connection->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
+function getConnection(){
+    $dbhost="db";
+    $dbname="seminariophp";
+    $dbuser="seminariophp";
+    $dbpass="seminariophp";
 
-        return $connection;
-    }
 
-    $app->addBodyParsingMiddleware();
-    $app->addErrorMiddleware(true, true, true);
-    $app->add( function ($request, $handler) {
-        $response = $handler->handle($request);
+    
+    $connection = new PDO ("mysql:host=$dbhost;dbname=$dbname",$dbuser,$dbpass);
+    $connection->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
 
-        return $response
-            ->withHeader('Access-Control-Allow-Origin', '*')
-            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-            ->withHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
-            ->withHeader('Content-Type', 'application/json')
-        ;
-    });
+    return $connection;
+}
+
+$app->addBodyParsingMiddleware();
+$app->addErrorMiddleware(true, true, true);
+$app->add( function ($request, $handler) {
+    $response = $handler->handle($request);
+
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
+        ->withHeader('Content-Type', 'application/json')
+    ;
+});
+
+// ACÁ VAN LOS ENDPOINTS
 
 //localidades
 
@@ -94,8 +98,13 @@ $app->post('/localidades',function(Request $request,Response $response){
             'code' => 400,
             'data' => $error
         ]);
-        $response->getBody()->write($payload);   
-        return $response->withHeader('Content+Type', 'application/json'); 
+
+        $response = $response
+        ->withStatus(400) 
+        ->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write($payload);
+    
+        return $response;
     }
          
     try{
@@ -116,8 +125,12 @@ $app->post('/localidades',function(Request $request,Response $response){
                 'data' => $error
             ]);
                             
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }
 
         $stmt = $connection->prepare("INSERT INTO localidades (nombre) VALUES (:nombre)");
@@ -176,8 +189,13 @@ $app->put('/localidades/{id}',function(Request $request,Response $response){
             'code' => 400,
             'data' => $error
         ]);
-        $response->getBody()->write($payload);   
-        return $response->withHeader('Content+Type', 'application/json'); 
+                         
+        $response = $response
+        ->withStatus(400) 
+        ->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write($payload);
+    
+        return $response;
     }
          
     try{
@@ -198,8 +216,13 @@ $app->put('/localidades/{id}',function(Request $request,Response $response){
                 'data' => $error
             ]);
                             
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }
 
         $stmt = $connection->prepare("UPDATE localidades SET nombre = :nombre WHERE id = :id");
@@ -251,8 +274,13 @@ $app->delete('/localidades/{id}', function (Request $request, Response $response
 				'code' => 400,
 		    ]);
 
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
                             
         } else {
 
@@ -343,8 +371,13 @@ $app->post('/tipos_propiedad',function(Request $request,Response $response){
             'code' => 400,
             'data' => $error
         ]);
-        $response->getBody()->write($payload);   
-        return $response->withHeader('Content-Type', 'application/json'); 
+                        
+        $response = $response
+        ->withStatus(400) 
+        ->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write($payload);
+    
+        return $response;
     }
          
     try{
@@ -365,8 +398,13 @@ $app->post('/tipos_propiedad',function(Request $request,Response $response){
                 'data' => $error
             ]);
                             
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response; 
         }
 
         $stmt = $connection->prepare("INSERT INTO tipo_propiedades (nombre) VALUES (:nombre)");
@@ -425,8 +463,13 @@ $app->put('/tipos_propiedad/{id}',function(Request $request,Response $response){
             'code' => 400,
             'data' => $error
         ]);
-        $response->getBody()->write($payload);   
-        return $response->withHeader('Content-Type', 'application/json'); 
+                         
+        $response = $response
+        ->withStatus(400) 
+        ->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write($payload);
+    
+        return $response;
     }
          
     try{
@@ -447,8 +490,13 @@ $app->put('/tipos_propiedad/{id}',function(Request $request,Response $response){
                 'data' => $error
             ]);
                             
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response; 
         }
 
         $stmt = $connection->prepare("UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id");
@@ -500,8 +548,13 @@ $app->delete('/tipos_propiedad/{id}', function (Request $request, Response $resp
 				'code' => 400,
 		    ]);
 
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
                             
         } else {
 
@@ -721,8 +774,13 @@ $app->post('/inquilinos',function(Request $request,Response $response){
                 'data' => $error
             ]);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }   
 			      
         $stmt = $connection->prepare("INSERT INTO inquilinos (nombre,apellido,email,documento,activo)
@@ -763,7 +821,6 @@ $app->put('/inquilinos/{id}',function(Request $request,Response $response){
 
     $id = $request->getAttribute('id');
     $params = $request->getParsedBody();
-    $keys = ["nombre","apellido","documento","email","activo"];
     $error = [];
 
     if (isset($params['nombre'])) {
@@ -812,6 +869,7 @@ $app->put('/inquilinos/{id}',function(Request $request,Response $response){
             $error['activo'] = "El campo está vacío.";  
         } 
     } 
+
     try{
     
         $connection = getConnection();
@@ -831,9 +889,13 @@ $app->put('/inquilinos/{id}',function(Request $request,Response $response){
                 'code' => 400,
                 'data' => $error
             ]);
+                         
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+            return $response;
         }   
 
         $sql = "UPDATE inquilinos SET ";
@@ -933,8 +995,13 @@ $app->delete('/inquilinos/{id}', function (Request $request, Response $response)
 				'code' => 400,
 		    ]);
 
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
                             
         } else {
 
@@ -981,11 +1048,7 @@ $app->get('/propiedades', function (Request $request, Response $response){
                         WHERE 1 = 1';
                         
         if (isset($params['disponible'])) {
-            if ($params['disponible'] === 'true') {
-                $sql .= ' AND p.disponible = 1';
-            } else if ($params['disponible'] === 'false'){
-                $sql .= ' AND p.disponible = 0';
-            }
+            $sql .= ' AND p.disponible = :disponible';
         }
                         
         if(isset($params['localidad_id'])){
@@ -1010,6 +1073,10 @@ $app->get('/propiedades', function (Request $request, Response $response){
 
         if(isset($params['cantidad_huespedes'])){
             $stmt->bindParam(":cantidad_huespedes", $params['cantidad_huespedes']);
+        }
+
+        if(isset($params['disponible'])){
+            $stmt->bindParam(":disponible", $params['disponible']);
         }
 
         if(isset($params['fecha_inicio_disponibilidad'])){
@@ -1079,40 +1146,106 @@ $app->post('/propiedades',function(Request $request,Response $response){
     
     $params = $request->getParsedBody();
     
-    $requiredKeys = ["domicilio","localidad_id","cantidad_huespedes","fecha_inicio_disponibilidad","disponible","cantidad_dias","valor_noche","tipo_propiedad_id"];
     $error = [];   
 
-    foreach ($requiredKeys as $key) {
-        if (!array_key_exists($key, $params)) {
-            $error[$key] = "No está definido.";
-        } else {
-            if (empty($params[$key])){
-                $error[$key] = "Está vacío.";
-            }
-        }
-        
-    }
+    //campos requeridos
 
-    if ($params['disponible'] === 'true') {
-        $params['disponible'] = 1;
-    } else if ($params['disponible'] === 'false'){
-        $params['disponible'] = 0;
-    }
+    if (!isset($params['domicilio'])) {
+        $error['domicilio'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['domicilio'])) {
+            $error['nombre'] = "El campo está vacío."; 
+        } 
+    } 
 
-    $noRequiredKeys = ["cantidad_habitaciones","cantidad_banios","cochera","imagen","tipo_imagen"];
+    if (!isset($params['localidad_id'])) {
+        $error['localidad_id'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['localidad_id'])) {
+            $error['localidad_id'] = "El campo está vacío."; 
+        } 
+    } 
 
-    foreach ($noRequiredKeys as $key) {
-        if (array_key_exists($key, $params) && (empty($params[$key]))) {
-            $error[$key] = "Está vacío.";
+    if (!isset($params['cantidad_huespedes'])) {
+        $error['cantidad_huespedes'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['cantidad_huespedes'])) {
+            $error['cantidad_huespedes'] = "El campo esta vacío."; 
         } 
     }
 
-    if ($params['cochera'] === 'true') {
-        $params['cochera'] = 1;
-    } else if ($params['cochera'] === 'false'){
-        $params['cochera'] = 0;
+    if (!isset($params['fecha_inicio_disponibilidad'])) {
+        $error['fecha_inicio_disponibilidad'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['fecha_inicio_disponibilidad'])) {
+            $error['fecha_inicio_disponibilidad'] = "El campo esta vacío."; 
+        } 
     }
 
+    if (!isset($params['disponible'])) {
+        $error['disponible'] = "El campo no está definido.";
+    
+    } else {
+        if ($params['disponible'] === "") {
+            $error['disponible'] = "El campo esta vacío."; 
+        } 
+    }
+
+    if (!isset($params['cantidad_dias'])) {
+        $error['cantidad_dias'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['cantidad_dias'])) {
+            $error['cantidad_dias'] = "El campo esta vacío."; 
+        } 
+    }
+
+    if (!isset($params['valor_noche'])) {
+        $error['valor_noche'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['valor_noche'])) {
+            $error['valor_noche'] = "El campo esta vacío."; 
+        } 
+    }
+
+    if (!isset($params['tipo_propiedad_id'])) {
+        $error['tipo_propiedad_id'] = "El campo no está definido.";
+    
+    } else {
+        if (empty($params['tipo_propiedad_id'])) {
+            $error['tipo_propiedad_id'] = "El campo esta vacío."; 
+        } 
+    }
+
+    //campos no requeridos
+
+    if (isset($params['cantidad_habitaciones'])&& empty($params['cantidad_habitaciones'])) {
+        $error['cantidad_habitaciones'] = "El campo esta vacío.";
+    
+    } 
+
+    if (isset($params['cantidad_banios'])&& empty($params['cantidad_banios'])) {
+        $error['cantidad_banios'] = "El campo esta vacío.";
+    
+    } 
+
+    if (isset($params['cochera'])&& ($params['cochera'] === "")) {
+        $error['cochera'] = "El campo esta vacío.";
+    } 
+
+    
+    if (isset($params['imagen'])&& empty($params['imagen'])) {
+        $error['imagen'] = "El campo esta vacío.";
+    }
+    
+    if (isset($params['tipo_imagen'])&& empty($params['tipo_imagen'])) {
+        $error['tipo_imagen'] = "El campo esta vacío.";
+    }
 
     try{
 
@@ -1152,8 +1285,13 @@ $app->post('/propiedades',function(Request $request,Response $response){
                 'data' => $error
             ]);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }   
       
         $stmt = $connection->prepare("INSERT INTO propiedades(domicilio,localidad_id,cantidad_habitaciones,cantidad_banios,cochera,cantidad_huespedes,fecha_inicio_disponibilidad,cantidad_dias,disponible,valor_noche,tipo_propiedad_id,imagen,tipo_imagen)
@@ -1201,14 +1339,60 @@ $app->put('/propiedades/{id}',function(Request $request,Response $response){
     
     $id = $request->getAttribute('id');
     $params = $request->getParsedBody();
-    $keys = ["domicilio","localidad_id","cantidad_huespedes","fecha_inicio_disponibilidad","cantidad_dias","disponible","valor_noche","tipo_propiedad_id","cantidad_habitaciones","cantidad_banios","cochera","imagen","tipo_imagen"];
-    $error = [];   
+    $error = [];  
 
-    foreach ($keys as $key) {
-        if (isset($params[$key]) && empty($params[$key])) {
-            $error[$key] = "Está vacío.";
-        }
-    }    
+    if (isset($params['domicilio'])&& empty($params['domicilio'])) {
+        $error['domicilio'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['localidad_id'])&& empty($params['localidad_id'])) {
+        $error['localidad_id'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['fecha_inicio_disponibilidad'])&& empty($params['fecha_inicio_disponibilidad'])) {
+        $error['fecha_inicio_disponibilidad'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['cantidad_habitaciones'])&& empty($params['cantidad_habitaciones'])) {
+        $error['cantidad_habitaciones'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['cantidad_dias'])&& empty($params['cantidad_dias'])) {
+        $error['cantidad_dias'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['disponible'])&& $params['disponible'] === "") {
+        $error['disponible'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['valor_noche'])&& empty($params['valor_noche'])) {
+        $error['valor_noche'] = "El campo esta vacío.";
+    }
+
+    if (isset($params['tipo_propiedad_id'])&& empty($params['tipo_propiedad_id'])) {
+        $error['tipo_propiedad_id'] = "El campo esta vacío.";
+    }
+
+    if (isset($params['cantidad_habitaciones'])&& empty($params['cantidad_habitaciones'])) {
+        $error['cantidad_habitaciones'] = "El campo esta vacío.";
+    }
+
+    if (isset($params['cantidad_banios'])&& empty($params['cantidad_banios'])) {
+        $error['cantidad_banios'] = "El campo esta vacío.";
+    } 
+
+    if (isset($params['cochera'])&& ($params['cochera'] === "")) {
+        $error['cochera'] = "El campo esta vacío.";
+    } 
+
+    
+    if (isset($params['imagen'])&& empty($params['imagen'])) {
+        $error['imagen'] = "El campo esta vacío.";
+    }
+    
+    if (isset($params['tipo_imagen'])&& empty($params['tipo_imagen'])) {
+        $error['tipo_imagen'] = "El campo esta vacío.";
+    }
 
     try{
 
@@ -1248,8 +1432,13 @@ $app->put('/propiedades/{id}',function(Request $request,Response $response){
                 'data' => $error
             ]);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }   
       
         $sql = "UPDATE propiedades SET ";
@@ -1412,8 +1601,13 @@ $app->delete('/propiedades/{id}', function (Request $request, Response $response
 				'code' => 400,
 		    ]);
 
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json'); 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response; 
                             
         } else {
 
@@ -1536,8 +1730,13 @@ $app->post('/reservas',function(Request $request,Response $response){
                 'data' => $error
             ]);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }   
     
         $stmt = $connection->prepare("SELECT valor_noche FROM propiedades WHERE id = :propiedad_id");
@@ -1608,8 +1807,13 @@ $app->put('/reservas/{id}',function(Request $request,Response $response){
                 'data' => $error
             ]);
 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
             $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+        
+            return $response;
 
         }
 
@@ -1659,8 +1863,13 @@ $app->put('/reservas/{id}',function(Request $request,Response $response){
                 'data' => $error
             ]);
         
-            $response->getBody()->write($payload);   
-            return $response->withHeader('Content-Type', 'application/json');
+                            
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write($payload);
+        
+            return $response;
         }   
     
         if(isset($params['cantidad_noches'])){
@@ -1764,8 +1973,13 @@ $app->delete('/reservas/{id}',function(Request $request,Response $response){
                 'code' => 400,
             ]);
 
+                             
+            $response = $response
+            ->withStatus(400) 
+            ->withHeader('Content-Type', 'application/json');
             $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
+        
+            return $response;
 
         }
 
@@ -1796,7 +2010,5 @@ $app->delete('/reservas/{id}',function(Request $request,Response $response){
 	 }
 
 });
-
-
 
 $app->run();
