@@ -7,6 +7,9 @@ use Slim\Factory\AppFactory;
 require __DIR__ . '/vendor/autoload.php';
 
 $app = AppFactory::create();
+
+
+
 $app->addRoutingMiddleware();
 
 function getConnection(){
@@ -1114,7 +1117,11 @@ $app->get('/propiedades/{id}',function (Request $request, Response $response){
 
         $connection = getConnection();
         $id = $request->getAttribute('id');
-        $stmt = $connection->prepare("SELECT * FROM propiedades WHERE id = :id");
+        $stmt = $connection->prepare("SELECT p.*, l.nombre AS localidad, tp.nombre AS tipo_de_propiedad
+                                     FROM propiedades p
+                                     INNER JOIN localidades l ON p.localidad_id=l.id
+                                     INNER JOIN tipo_propiedades tp ON p.tipo_propiedad_id = tp.id
+                                     WHERE p.id = :id");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         
