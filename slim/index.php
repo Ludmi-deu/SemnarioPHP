@@ -1650,11 +1650,12 @@ $app->delete('/propiedades/{id}', function (Request $request, Response $response
 $app->get('/reservas',function (Request $request, Response $response){
 
     try{
-
         $connection = getConnection();
-        $query = $connection->query('SELECT * FROM reservas res 
-                                    INNER JOIN propiedades p ON res.propiedad_id = p.id
-                                    INNER JOIN inquilinos inq ON res.inquilino_id = inq.id');
+        $query = $connection->query('SELECT r.*, i.apellido AS apellido_inquilino, i.nombre AS nombre_inquilino, l.nombre AS localidad, t.nombre AS tipo_de_propiedad, p.domicilio FROM reservas r 
+        INNER JOIN inquilinos i ON r.inquilino_id = i.id 
+        INNER JOIN propiedades p ON r.propiedad_id = p.id
+        INNER JOIN localidades l ON p.localidad_id = l.id 
+        INNER JOIN tipo_propiedades t ON p.tipo_propiedad_id = t.id');
         $data = $query -> fetchAll(PDO::FETCH_ASSOC);
 
         $payload = json_encode([
@@ -1955,6 +1956,8 @@ $app->put('/reservas/{id}',function(Request $request,Response $response){
 
 });
 
+
+
 $app->delete('/reservas/{id}',function(Request $request,Response $response){
 
     try{
@@ -2017,5 +2020,8 @@ $app->delete('/reservas/{id}',function(Request $request,Response $response){
 	 }
 
 });
+
+
+
 
 $app->run();
